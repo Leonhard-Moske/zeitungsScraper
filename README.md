@@ -15,6 +15,7 @@ test abos for premium article length?
 * title (for no double counting)
 * average length of words
 * type of article (commentary, sth.)
+* occurence (repetition)
 
 ## News paper list
 * FAZ
@@ -32,7 +33,7 @@ test abos for premium article length?
 set fixed number of articles per news paper
 cron job
 how to do constant download time?
-how to no double counting
+how to no double counting (maybe we want doublecounting)
 Some sites dont want to bescraped-> use additional headers ()
 
 ### Links

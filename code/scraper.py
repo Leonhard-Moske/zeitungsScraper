@@ -4,9 +4,23 @@ from types import NoneType
 import requests
 from bs4 import BeautifulSoup
 
+
+class Article:
+    def __init__(self) -> None:    
+        self.paper = ""
+        self.title = ""
+        self.link = ""
+        self.author = []
+        self.date = None
+        self.premium = None
+        self.langth = 0
+        self.occurence = 0
+        self.articleType = 0
+
 # FAZ
 #------------------------------------------------------------------------------
 
+fazArticles = []
 
 URL = "https://www.faz.net/aktuell/"
 divArticle = "tsr-Base_ContentWrapperInner teaserInner linkable"
@@ -15,23 +29,48 @@ headlineName = "tsr-Base_HeadlineText"
 articleLinkName = "js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink"
 
 page = requests.get(URL)
-#with open('datadump/output.html', 'w') as f:
-#        f.write(page.text)
-
 soup = BeautifulSoup(page.content, "html.parser")
 
-with open('datadump/output.html', 'w') as f:
-        f.write(soup.prettify())
+# with open('datadump/output.html', 'w') as f:
+#         f.write(soup.prettify())
+
 
 article_divs = soup.find_all("div", class_=divArticle)
 
-#print(len(article_divs))
-
 for article_div in article_divs:
-    print(article_div.find(headlineElement, class_ = headlineName).text.strip()) #find html element span with class :...
-    print("\t",article_div.find("a", class_=articleLinkName)["href"])    
+    fazArticles.append(Article())
+    fazArticles[-1].paper = "FAZ"
+    fazArticles[-1].title = article_div.find(headlineElement, class_ = headlineName).text.strip() #find html element span with class :...
+    fazArticles[-1].link = article_div.find("a", class_=articleLinkName)["href"]
 
-#print(len(article_divs))
+# for art in fazArticles:
+#     print("title: ", art.title, "\nlink: ", art.link)
+
+# TODO occurence dense
+
+for article in fazArticles:
+    print(article.link)
+    page = requests.get(article.link)
+    soup = BeautifulSoup(page.content, "html.parser")
+    authorLink = soup.find_all("span","atc-MetaAuthorText")
+    if len(authorLink) > 0:
+        for al in authorLink:
+            authorname = al.findNext("span").text
+            article.author.append(al.findNext("span").text)
+
+    # authorLink = soup.find_all("a","atc-MetaAuthorLink")
+    # if len(authorLink) > 0:
+    #     for al in authorLink:
+    #         authorname = al.text
+    #         article.author.append(al.text)
+    # else:
+    #     authtext = soup.find_all("span", "atc-MetaAuthorText")
+    #     print(authtext)
+    #     authname = authtext.findNext("span")
+    #     print(authname)
+    print(article.author)
+    with open('datadump/output.html', 'w') as f:
+        f.write(soup.prettify())
 
 
 # Zeit
@@ -49,8 +88,8 @@ page = requests.get(URL)
 
 soup = BeautifulSoup(page.content, "html.parser")
 
-with open('datadump/output.html', 'w') as f:
-        f.write(soup.prettify())
+# with open('datadump/output.html', 'w') as f:
+#     f.write(soup.prettify())
 
 article_divs = soup.find_all("div", class_=divArticle)
 
