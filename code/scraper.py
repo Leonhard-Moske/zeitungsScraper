@@ -3,6 +3,7 @@
 from types import NoneType
 import requests
 from bs4 import BeautifulSoup
+import sqlite3
 
 
 class Article:
@@ -13,103 +14,146 @@ class Article:
         self.author = []
         self.date = None
         self.premium = None
-        self.langth = 0
+        self.length = 0
         self.occurence = 0
         self.articleType = 0
+        self.position = None
+        self.wordlength = 0
 
 # FAZ
 #------------------------------------------------------------------------------
 
-fazArticles = []
+# fazArticles = []
 
-URL = "https://www.faz.net/aktuell/"
-divArticle = "tsr-Base_ContentWrapperInner teaserInner linkable"
-headlineElement = "span"
-headlineName = "tsr-Base_HeadlineText"
-articleLinkName = "js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink"
+# URL = "https://www.faz.net/aktuell/"
+# divArticle = "tsr-Base_ContentWrapperInner teaserInner linkable"
+# headlineElement = "span"
+# headlineName = "tsr-Base_HeadlineText"
+# articleLinkName = "js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink"
 
-page = requests.get(URL)
-soup = BeautifulSoup(page.content, "html.parser")
+# page = requests.get(URL)
+# soup = BeautifulSoup(page.content, "html.parser")
 
-# with open('datadump/output.html', 'w') as f:
+# # with open('datadump/output.html', 'w') as f:
+# #         f.write(soup.prettify())
+
+
+# article_divs = soup.find_all("div", class_=divArticle)
+
+# for article_div in article_divs:
+#     fazArticles.append(Article())
+#     fazArticles[-1].paper = "FAZ"
+#     fazArticles[-1].title = article_div.find(headlineElement, class_ = headlineName).text.strip() #find html element span with class :...
+#     fazArticles[-1].link = article_div.find("a", class_=articleLinkName)["href"]
+
+# # for art in fazArticles:
+# #     print("title: ", art.title, "\nlink: ", art.link)
+
+# # TODO occurence dense
+
+# for article in fazArticles:
+#     print(article.link)
+#     page = requests.get(article.link)
+#     soup = BeautifulSoup(page.content, "html.parser")
+#     authorLink = soup.find_all("span","atc-MetaAuthorText")
+#     if len(authorLink) > 0:
+#         for al in authorLink:
+#             authorname = al.findNext("span").text
+#             article.author.append(al.findNext("span").text)
+
+#     # authorLink = soup.find_all("a","atc-MetaAuthorLink")
+#     # if len(authorLink) > 0:
+#     #     for al in authorLink:
+#     #         authorname = al.text
+#     #         article.author.append(al.text)
+#     # else:
+#     #     authtext = soup.find_all("span", "atc-MetaAuthorText")
+#     #     print(authtext)
+#     #     authname = authtext.findNext("span")
+#     #     print(authname)
+#     print(article.author)
+#     with open('datadump/output.html', 'w') as f:
 #         f.write(soup.prettify())
 
 
-article_divs = soup.find_all("div", class_=divArticle)
+# # Zeit
+# #------------------------------------------------------------------------------
 
-for article_div in article_divs:
-    fazArticles.append(Article())
-    fazArticles[-1].paper = "FAZ"
-    fazArticles[-1].title = article_div.find(headlineElement, class_ = headlineName).text.strip() #find html element span with class :...
-    fazArticles[-1].link = article_div.find("a", class_=articleLinkName)["href"]
+# URL = "https://www.zeit.de/index"
+# divArticle = "zon-teaser-standard__container" #"zon-teaser-standard__combined-link" 
+# headlineElement = "span"
+# headlineName = "zon-teaser-standard__title"
+# articleLinkName = "zon-teaser-standard__heading-link"
 
-# for art in fazArticles:
-#     print("title: ", art.title, "\nlink: ", art.link)
+# page = requests.get(URL)
+# #with open('datadump/output.html', 'w') as f:
+# #        f.write(page.text)
 
-# TODO occurence dense
+# soup = BeautifulSoup(page.content, "html.parser")
 
-for article in fazArticles:
-    print(article.link)
-    page = requests.get(article.link)
-    soup = BeautifulSoup(page.content, "html.parser")
-    authorLink = soup.find_all("span","atc-MetaAuthorText")
-    if len(authorLink) > 0:
-        for al in authorLink:
-            authorname = al.findNext("span").text
-            article.author.append(al.findNext("span").text)
+# # with open('datadump/output.html', 'w') as f:
+# #     f.write(soup.prettify())
 
-    # authorLink = soup.find_all("a","atc-MetaAuthorLink")
-    # if len(authorLink) > 0:
-    #     for al in authorLink:
-    #         authorname = al.text
-    #         article.author.append(al.text)
-    # else:
-    #     authtext = soup.find_all("span", "atc-MetaAuthorText")
-    #     print(authtext)
-    #     authname = authtext.findNext("span")
-    #     print(authname)
-    print(article.author)
-    with open('datadump/output.html', 'w') as f:
-        f.write(soup.prettify())
+# article_divs = soup.find_all("div", class_=divArticle)
 
+# print(len(article_divs))
 
-# Zeit
+# for article_div in article_divs:
+#     #print(article_div)
+#     #print(article_div.find(headlineElement, class_ = headlineName).text.strip()) #find html element span with class :...
+#     a = article_div.find("a", class_=articleLinkName)
+#     if type(a) != NoneType:
+#         print("\t",article_div.find("a", class_=articleLinkName)["href"])
+#     else:
+#         print("sonder")
+#         print("\t",article_div.parent["href"])
+
+# print(len(article_divs))
+
+# filter articles
 #------------------------------------------------------------------------------
 
-URL = "https://www.zeit.de/index"
-divArticle = "zon-teaser-standard__container" #"zon-teaser-standard__combined-link" 
-headlineElement = "span"
-headlineName = "zon-teaser-standard__title"
-articleLinkName = "zon-teaser-standard__heading-link"
-
-page = requests.get(URL)
-#with open('datadump/output.html', 'w') as f:
-#        f.write(page.text)
-
-soup = BeautifulSoup(page.content, "html.parser")
-
-# with open('datadump/output.html', 'w') as f:
-#     f.write(soup.prettify())
-
-article_divs = soup.find_all("div", class_=divArticle)
-
-print(len(article_divs))
-
-for article_div in article_divs:
-    #print(article_div)
-    #print(article_div.find(headlineElement, class_ = headlineName).text.strip()) #find html element span with class :...
-    a = article_div.find("a", class_=articleLinkName)
-    if type(a) != NoneType:
-        print("\t",article_div.find("a", class_=articleLinkName)["href"])
-    else:
-        print("sonder")
-        print("\t",article_div.parent["href"])
-
-print(len(article_divs))
 
 #database
 #------------------------------------------------------------------------------
 
+def insertArticle(article, dbcon):
+    dbcon.execute(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION) VALUES
+                    ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title}', '{article.articleType}', {article.wordlength}, {article.position}) ''')
+
+
+with sqlite3.connect("database/data.db") as dbcon:
+    print("database connect")
+
+    a =  dbcon.execute('''SELECT count(*) FROM sqlite_master WHERE type='table' AND name='ZEITUNG';''')
+    #print(a.fetchone()[0])
+    if a.fetchone()[0] != 1:
+        dbcon.execute('''CREATE TABLE ZEITUNG
+        (ID              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        ZEITUNGSNAME     VARCHAR         NOT NULL,
+        RELEASEDATE      DATE            NOT NULL,
+        PREMIUM          BOOL,
+        LENGTH           INT             NOT NULL,
+        TITLE            VARCHAR         NOT NULL,
+        TYPE             VARCHAR         ,
+        WORDLENGTH       DECIMAL         ,
+        POSITION         INT             );''')
+
+
+
+    art = Article()
+    art.paper = "Test"
+    art.date = "2022-09-11"
+    art.premium = "FALSE"
+    art.length = 2
+    art.title = "Test insertion"
+    art.articleType = "Test"
+    art.wordlength = 1
+    art.position = 0
+
+    insertArticle(art, dbcon)
+
+    dbcon.commit()
 
 #webscraper tutorial
 # tutorial at https://realpython.com/beautiful-soup-web-scraper-python/
