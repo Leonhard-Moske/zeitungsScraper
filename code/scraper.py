@@ -4,6 +4,7 @@ from types import NoneType
 import requests
 from bs4 import BeautifulSoup
 import sqlite3
+import json
 
 
 class Article:
@@ -118,8 +119,10 @@ class Article:
 #------------------------------------------------------------------------------
 
 def insertArticle(article, dbcon):
-    dbcon.execute(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION) VALUES
-                    ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title}', '{article.articleType}', {article.wordlength}, {article.position}) ''')
+    print(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION, AUTHOR) VALUES
+                    ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title}', '{article.articleType}', {article.wordlength}, {article.position}, '{json.dumps(article.author)}') ''')
+    dbcon.execute(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION, AUTHOR) VALUES
+                    ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title}', '{article.articleType}', {article.wordlength}, {article.position}, '{json.dumps(article.author)}') ''')
 
 
 with sqlite3.connect("database/data.db") as dbcon:
@@ -131,6 +134,7 @@ with sqlite3.connect("database/data.db") as dbcon:
         dbcon.execute('''CREATE TABLE ZEITUNG
         (ID              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         ZEITUNGSNAME     VARCHAR         NOT NULL,
+        AUTHOR           JSON         NOT NULL,
         RELEASEDATE      DATE            NOT NULL,
         PREMIUM          BOOL,
         LENGTH           INT             NOT NULL,
@@ -150,6 +154,7 @@ with sqlite3.connect("database/data.db") as dbcon:
     art.articleType = "Test"
     art.wordlength = 1
     art.position = 0
+    art.author = ["a", "b"]
 
     insertArticle(art, dbcon)
 
