@@ -1,7 +1,6 @@
 # webscraper
 #------------------------------------------------------------------------------
 from os import remove
-from types import NoneType
 import requests
 from bs4 import BeautifulSoup
 import sqlite3
@@ -150,10 +149,6 @@ for article in list(zeitArticles):
         zeitArticles.remove(article)
     elif article.link.find("https://www.zeit.de") == None:
         zeitArticles.remove(article)
-
-
-# filter articles
-#------------------------------------------------------------------------------
 
 
 #database
