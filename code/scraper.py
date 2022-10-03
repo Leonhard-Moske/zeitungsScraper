@@ -1,11 +1,16 @@
 # webscraper
 #------------------------------------------------------------------------------
 from os import remove
+from types import NoneType
 import requests
 from bs4 import BeautifulSoup
 import sqlite3
 import json
 import datetime
+
+
+# preparation
+#------------------------------------------------------------------------------
 
 
 class Article:
@@ -21,11 +26,14 @@ class Article:
         self.position = None
         self.wordlength = 0
 
+todaysdate = datetime.datetime.now().strftime("%Y-%m-%d")
+
 # FAZ
 #------------------------------------------------------------------------------
 
 fazArticles = []
 
+# variables specific to FAZ
 URL = "https://www.faz.net/aktuell/"
 divArticle = "tsr-Base_ContentWrapperInner teaserInner linkable"
 headlineElement = "span"
@@ -33,15 +41,17 @@ headlineName = "tsr-Base_HeadlineText"
 articleLinkName = "js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink"
 textClassName="atc-TextParagraph"
 
+#download the main page
 page = requests.get(URL)
 soup = BeautifulSoup(page.content, "html.parser")
 
 # with open('datadump/output.html', 'w') as f:
 #         f.write(soup.prettify())
 
-todaysdate = datetime.datetime.now().strftime("%Y-%m-%d")
 
+# find all articles
 article_divs = soup.find_all("div", class_=divArticle)
+
 
 for k, article_div in enumerate(article_divs):
     fazArticles.append(Article())
@@ -68,7 +78,7 @@ for article in list(fazArticles): #list because remove wont work otherwise
             article.author.append(al.findNext("span").text)
 
     #length
-    textparagraghs = soup.findAll("p",textClassName)
+    textparagraghs = soup.findAll("p", class_ = textClassName)
     length = 0
     for par in textparagraghs:
         length += len(par.text.split())
@@ -77,43 +87,70 @@ for article in list(fazArticles): #list because remove wont work otherwise
     if len(article.author) == 0 :
         fazArticles.remove(article)
 
-    # with open('datadump/output.html', 'w') as f:
-    #     f.write(soup.prettify())
+    if article.length == 0:
+        fazArticles.remove(article)
 
 
 # Zeit
 #------------------------------------------------------------------------------
 
-# URL = "https://www.zeit.de/index"
-# divArticle = "zon-teaser-standard__container" #"zon-teaser-standard__combined-link" 
-# headlineElement = "span"
-# headlineName = "zon-teaser-standard__title"
-# articleLinkName = "zon-teaser-standard__heading-link"
+zeitArticles = []
 
-# page = requests.get(URL)
-# #with open('datadump/output.html', 'w') as f:
-# #        f.write(page.text)
+URL = "https://www.zeit.de/index"
+divArticle = "zon-teaser-standard__container" #"zon-teaser-standard__combined-link" 
+headlineElement = "span"
+headlineName = "zon-teaser-standard__title"
+articleLinkName = "zon-teaser-standard__heading-link"
+zplus = "zplus-badge zplus-badge--coverless" #div in article for premium
+authorLink = "https://www.zeit.de/autoren/R"
+textClassName = "paragraph article__item"
 
-# soup = BeautifulSoup(page.content, "html.parser")
+page = requests.get(URL)
+soup = BeautifulSoup(page.content, "html.parser")
 
-# # with open('datadump/output.html', 'w') as f:
-# #     f.write(soup.prettify())
+article_divs = soup.find_all("article")
 
-# article_divs = soup.find_all("div", class_=divArticle)
+print(len(article_divs))
 
-# print(len(article_divs))
+for k, article_div in enumerate(article_divs):
+    zeitArticles.append(Article())
+    zeitArticles[-1].paper = "Zeit"
+    zeitArticles[-1].title = article_div.find("a").text.strip()
+    zeitArticles[-1].link = article_div.find("a")["href"]
+    zeitArticles[-1].date = todaysdate
+    zeitArticles[-1].position = k
 
-# for article_div in article_divs:
-#     #print(article_div)
-#     #print(article_div.find(headlineElement, class_ = headlineName).text.strip()) #find html element span with class :...
-#     a = article_div.find("a", class_=articleLinkName)
-#     if type(a) != NoneType:
-#         print("\t",article_div.find("a", class_=articleLinkName)["href"])
-#     else:
-#         print("sonder")
-#         print("\t",article_div.parent["href"])
+for article in list(zeitArticles):
+    page = requests.get(article.link)
+    soup = BeautifulSoup(page.content, "html.parser")
 
-# print(len(article_divs))
+    #author
+    if soup.find("a",rel="author") != None:
+        article.author = soup.find("a",rel="author").find("span").text
+    elif soup.find("span",class_="metadata__source") != None and soup.find("span",class_="metadata__source").find("a") != None:
+        article.author = soup.find("span",class_="metadata__source").find("a")["href"].split("/")[3]
+
+    #premium
+    if soup.find("span", class_ = "zplus-badge__link-text") != None:
+        article.premium = 1
+    else:
+        article.premium = 0
+    
+    #length
+    textparagraghs = soup.findAll("p",class_ = textClassName)
+    length = 0
+    for par in textparagraghs:
+        length += len(par.text.split())
+    article.length = length
+
+    #filter
+    if article.length == 0:
+        zeitArticles.remove(article)
+    elif len(article.author) == 0:
+        zeitArticles.remove(article)
+    elif article.link.find("https://www.zeit.de") == None:
+        zeitArticles.remove(article)
+
 
 # filter articles
 #------------------------------------------------------------------------------
@@ -123,17 +160,16 @@ for article in list(fazArticles): #list because remove wont work otherwise
 #------------------------------------------------------------------------------
 
 def insertArticle(article, dbcon):
-    print(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION, AUTHOR) VALUES
-                     ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title}', '{article.articleType}', {article.wordlength}, {article.position}, '{json.dumps(article.author)}') ''')
+    #print(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION, AUTHOR, LINK) VALUES
+    #                ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title.replace("'", "`")}', '{article.articleType}', {article.wordlength}, {article.position}, '{json.dumps(article.author)}', '{article.link}') ''')
     dbcon.execute(f''' INSERT INTO ZEITUNG (ZEITUNGSNAME,RELEASEDATE,PREMIUM,LENGTH,TITLE,TYPE,WORDLENGTH,POSITION, AUTHOR, LINK) VALUES
-                    ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title}', '{article.articleType}', {article.wordlength}, {article.position}, '{json.dumps(article.author)}', '{article.link}') ''')
+                    ('{article.paper}', '{article.date}', {article.premium}, {article.length}, '{article.title.replace("'", "`")}', '{article.articleType}', {article.wordlength}, {article.position}, '{json.dumps(article.author)}', '{article.link}') ''')
 
 
 with sqlite3.connect("database/data.db") as dbcon:
     print("database connect")
 
     a =  dbcon.execute('''SELECT count(*) FROM sqlite_master WHERE type='table' AND name='ZEITUNG';''')
-    #print(a.fetchone()[0])
     if a.fetchone()[0] != 1:
         dbcon.execute('''CREATE TABLE ZEITUNG
         (ID              INTEGER         NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -148,20 +184,9 @@ with sqlite3.connect("database/data.db") as dbcon:
         POSITION         INT             ,
         LINK             VARCHAR         NOT NULL);''')
 
-
-
-    # art = Article()
-    # art.paper = "Test"
-    # art.date = "2022-09-11"
-    # art.premium = "FALSE"
-    # art.length = 2
-    # art.title = "Test insertion"
-    # art.articleType = "Test"
-    # art.wordlength = 1
-    # art.position = 0
-    # art.author = ["a", "b"]
-
     for art in fazArticles:
+        insertArticle(art,dbcon)
+    for art in zeitArticles:
         insertArticle(art,dbcon)
 
     dbcon.commit()
